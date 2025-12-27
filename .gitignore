@@ -1,0 +1,17 @@
+/target/
+/build/
+*.jar
+*.war
+*.ear
+*.class
+.idea/
+*.iml
+*.iws
+*.ipr
+.env
+.env.*
+application.yml
+application.yaml
+/target/classes/
+/target/generated-sources/
+/init-db

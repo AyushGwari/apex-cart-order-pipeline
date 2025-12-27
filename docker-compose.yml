@@ -1,0 +1,19 @@
+services:
+  # The Shared Database Instance (hosting multiple DBs)
+  postgres:
+    image: postgres:15
+    container_name: apexcart-db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init-db:/docker-entrypoint-initdb.d #script to create multiple DBs
+
+# Redis for Gateway Rate Limiting (Adding now so it's ready)
+  redis:
+    image: redis:7-alpine
+    container_name: apexcart-redis
+    ports:
+      - "6379:6379"
