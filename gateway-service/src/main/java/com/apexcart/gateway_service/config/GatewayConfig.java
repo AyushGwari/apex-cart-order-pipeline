@@ -19,7 +19,11 @@ public class GatewayConfig {
                 .route("order-service", r -> r.path("/api/v1/orders/**")
                         .filters(f -> f.filter(authFilter.apply(new AuthenticationFilter.Config())))
                         .uri("lb://ORDER-SERVICE")) //dynamic lookup to url due to eureka service discovery
+                .route("inventory-service",r -> r.path("/api/v1/inventory/**")
+                        .filters(f -> f.filter(authFilter.apply(new AuthenticationFilter.Config())))
+                        .uri("lb://INVENTORY-SERVICE"))
                 .build();
+
     }
 
 }

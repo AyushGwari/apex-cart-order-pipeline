@@ -1,5 +1,6 @@
 package com.apexcart.gateway_service.util;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -15,14 +16,21 @@ public class JwtUtil
     public void validateToken(final String token){
         Jwts.parser().setSigningKey(getSignKey()).build().parseClaimsJws(token);
     }
-    public String extractUsername(String token) {
+    public Claims getAllClaimsFromToken(String token) {
         return Jwts.parser()
-                .setSigningKey(getSignKey())
+                .setSigningKey(getSignKey()) // Verify the signature first!
                 .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
+                .parseSignedClaims(token)
+                .getPayload(); // In older versions of JJWT, this was .getBody()
     }
+//    public String extractUsername(String token) {
+//        return Jwts.parser()
+//                .setSigningKey(getSignKey())
+//                .build()
+//                .parseClaimsJws(token)
+//                .getBody()
+//                .getSubject();
+//    }
     private Key getSignKey() {
         byte[] keyBytes = Decoders.BASE64.decode(SECRET);
         return Keys.hmacShaKeyFor(keyBytes);

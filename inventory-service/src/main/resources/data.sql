@@ -1,0 +1,1 @@
+INSERT INTO inventory (product_code, quantity, version) VALUES ('IPHONE_15', 100, 0);

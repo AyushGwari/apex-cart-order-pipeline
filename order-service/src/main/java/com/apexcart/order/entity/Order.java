@@ -20,10 +20,13 @@ import java.time.LocalDateTime;
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     @Column(nullable = false)
-    private String product;
+    private String productCode;
+
+    @Column(nullable = false)
+    private Integer quantity;
 
     @Column(nullable = false)
     private Double price;

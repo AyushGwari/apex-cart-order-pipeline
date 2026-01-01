@@ -1,6 +1,7 @@
 package com.apexcart.gateway_service.filter;
 
 import com.apexcart.gateway_service.util.JwtUtil;
+import io.jsonwebtoken.Claims;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
@@ -11,6 +12,9 @@ import org.springframework.http.server.reactive.ServletHttpHandlerAdapter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
+
 @Component
 public class AuthenticationFilter extends AbstractGatewayFilterFactory<AuthenticationFilter.Config> {
     @Autowired
@@ -32,9 +36,12 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             try {
                 // 3. Validate via JwtUtils
                 jwtUtil.validateToken(token);
-                String username= jwtUtil.extractUsername(token);
+                Claims claims = jwtUtil.getAllClaimsFromToken(authHeader);
+                List<String> roles = claims.get("roles",List.class);
+                String rolesHeader = (roles != null) ? String.join(",", roles) : "";
+                //   String username= jwtUtil.extractUsername(token);
                 ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
-                        .header("loggedInUser",username).build();
+                        .header("loggedInUser",claims.getSubject()).build();
                 return chain.filter(exchange.mutate().request(mutatedRequest).build());
             } catch (Exception e) {
                 return onError(exchange, "Unauthorized access: " + e.getMessage(), HttpStatus.UNAUTHORIZED);

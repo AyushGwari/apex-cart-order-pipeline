@@ -4,13 +4,14 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -27,4 +28,10 @@ public class UserCredential {
     @Column(nullable = false)
     @Size(min = 8,message ="Password must be at least 8 characters")
     private String password;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),         // Points to THIS entity (User)
+            inverseJoinColumns = @JoinColumn(name = "role_id")   // Points to the OTHER entity (Role)
+    )    private Set<Role> roles = new HashSet<>();
 }

@@ -7,12 +7,13 @@ import lombok.Data;
 
 @Data
 public class OrderRequest {
-    @NotBlank(message = "Product name is required")
-    private String product;
+    @NotBlank(message = "Product code is mandatory")
+    private String productCode;
 
     @NotNull(message = "Price is required")
     @Min(value = 1,message = "Price must be greater than 0")
     private Double price;
-
+    @NotNull(message = "Price is required")
+    @Min(value = 0, message = "Price cannot be negative")
     private Integer quantity;
 }
