@@ -20,6 +20,11 @@ public class InternalHeaderFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        String path = request.getRequestURI();
+        if (path.contains("/v3/api-docs") || path.contains("/swagger-ui")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
             String username = request.getHeader("loggedInUser");
         String rolesHeader = request.getHeader("loggedInUserRoles");
         List<SimpleGrantedAuthority> authorities = Collections.emptyList();

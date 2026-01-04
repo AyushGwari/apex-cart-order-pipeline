@@ -1,5 +1,6 @@
 package com.apexcart.gateway_service.filter;
 
+import com.apexcart.gateway_service.config.RouterValidator;
 import com.apexcart.gateway_service.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +20,8 @@ import java.util.List;
 public class AuthenticationFilter extends AbstractGatewayFilterFactory<AuthenticationFilter.Config> {
     @Autowired
     private JwtUtil jwtUtil;
-
+    @Autowired
+    private RouterValidator routerValidator;
     public AuthenticationFilter(){
         super(Config.class);
     }
@@ -28,24 +30,28 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
 
         return ((exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
-            String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return onError(exchange, "Missing or Invalid Authorization Header", HttpStatus.UNAUTHORIZED);
+            if (routerValidator.isSecured.test(request)) {
+                String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+                if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                    return onError(exchange, "Missing or Invalid Authorization Header", HttpStatus.UNAUTHORIZED);
+                }
+                String token = authHeader.substring(7);
+                try {
+                    // 3. Validate via JwtUtils
+                    jwtUtil.validateToken(token);
+                    Claims claims = jwtUtil.getAllClaimsFromToken(token);
+                    List<String> roles = claims.get("roles", List.class);
+                    String rolesHeader = (roles != null) ? String.join(",", roles) : "";
+                    //   String username= jwtUtil.extractUsername(token);
+                    ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
+                            .header("loggedInUser", claims.getSubject())
+                            .header("loggedInUserRoles", rolesHeader).build();
+                    return chain.filter(exchange.mutate().request(mutatedRequest).build());
+                } catch (Exception e) {
+                    return onError(exchange, "Unauthorized access: " + e.getMessage(), HttpStatus.UNAUTHORIZED);
+                }
             }
-            String token = authHeader.substring(7);
-            try {
-                // 3. Validate via JwtUtils
-                jwtUtil.validateToken(token);
-                Claims claims = jwtUtil.getAllClaimsFromToken(authHeader);
-                List<String> roles = claims.get("roles",List.class);
-                String rolesHeader = (roles != null) ? String.join(",", roles) : "";
-                //   String username= jwtUtil.extractUsername(token);
-                ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
-                        .header("loggedInUser",claims.getSubject()).build();
-                return chain.filter(exchange.mutate().request(mutatedRequest).build());
-            } catch (Exception e) {
-                return onError(exchange, "Unauthorized access: " + e.getMessage(), HttpStatus.UNAUTHORIZED);
-            }
+            return chain.filter(exchange);
         });
     }
     private Mono<Void> onError(ServerWebExchange exchange, String err, HttpStatus httpStatus) {

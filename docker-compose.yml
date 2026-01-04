@@ -32,6 +32,7 @@ services:
       - "5432:5432"
     volumes:
       - ./init-db:/docker-entrypoint-initdb.d #script to create multiple DBs
+      - postgres_data:/var/lib/postgresql/data #saves data in hard drive
 
 # Redis for Gateway Rate Limiting (Adding now so it's ready)
   redis:
@@ -39,3 +40,6 @@ services:
     container_name: apexcart-redis
     ports:
       - "6379:6379"
+
+volumes:
+  postgres_data:

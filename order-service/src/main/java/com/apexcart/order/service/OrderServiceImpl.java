@@ -9,11 +9,13 @@ import com.apexcart.order.exception.InsufficientStockException;
 import com.apexcart.order.exception.OrderNotFoundException;
 import com.apexcart.order.kafka.OrderProducer;
 import com.apexcart.order.repository.OrderRepository;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,6 +28,7 @@ public class OrderServiceImpl implements  OrderService{
     private final OrderProducer orderProducer;
     @Override
     @Transactional
+    @CircuitBreaker(name = "inventory-service",fallbackMethod = "inventoryFallback")
     public OrderResponse createOrder(OrderRequest request,String username) {
         log.info("Processing order for user: {} and product: {}", username, request.getProductCode());
         boolean isAvailable = inventoryClient.ItemisInStock(request.getProductCode(), request.getQuantity(),username);
@@ -50,6 +53,14 @@ public class OrderServiceImpl implements  OrderService{
         log.info("Order successfully placed with ID: {}", saveOrder.getId());
 
          return mapToResponse(saveOrder);
+    }
+
+    public OrderResponse inventoryFallback(OrderRequest request,String username){
+        log.error("Circuit breaker Triggered ,service down or slow");
+        OrderResponse res = new OrderResponse();
+        res.setStatus("CIRCUIT_OPEN");
+        res.setProduct(request.getProductCode());
+        return res;
     }
 
     private OrderResponse mapToResponse(Order order) {

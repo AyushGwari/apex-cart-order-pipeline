@@ -20,6 +20,7 @@ public class SecurityConfig {
                 .formLogin(form -> form.disable()) // Disable the default login form
                 .httpBasic(basic -> basic.disable()) // Disable the generated password login
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .anyRequest().authenticated() // All requests must pass through our filter
                 )
                 .sessionManagement(session -> session

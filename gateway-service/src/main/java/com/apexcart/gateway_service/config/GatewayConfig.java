@@ -11,19 +11,34 @@ public class GatewayConfig {
     @Bean
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder, AuthenticationFilter authFilter) {
         return builder.routes()
-                // Route 1: Identity Service (Open)
+                // --- IDENTITY SERVICE ---
                 .route("identity-service", r -> r.path("/api/v1/auth/**")
                         .uri("lb://IDENTITY-SERVICE"))
 
-                // Route 2: Order Service (Protected by your Filter)
+                // Route for Identity Docs (MUST be before or separate from the main route)
+                .route("identity-docs", r -> r.path("/IDENTITY-SERVICE/v3/api-docs/**")
+                        .filters(f -> f.rewritePath("/IDENTITY-SERVICE/(?<path>.*)", "/${path}"))
+                        .uri("lb://IDENTITY-SERVICE"))
+
+                // --- ORDER SERVICE ---
                 .route("order-service", r -> r.path("/api/v1/orders/**")
                         .filters(f -> f.filter(authFilter.apply(new AuthenticationFilter.Config())))
-                        .uri("lb://ORDER-SERVICE")) //dynamic lookup to url due to eureka service discovery
-                .route("inventory-service",r -> r.path("/api/v1/inventory/**")
+                        .uri("lb://ORDER-SERVICE"))
+
+                .route("order-docs", r -> r.path("/ORDER-SERVICE/v3/api-docs/**")
+                        .filters(f -> f.rewritePath("/ORDER-SERVICE/(?<path>.*)", "/${path}"))
+                        .uri("lb://ORDER-SERVICE"))
+
+                // --- INVENTORY SERVICE ---
+                .route("inventory-service", r -> r.path("/api/v1/inventory/**")
                         .filters(f -> f.filter(authFilter.apply(new AuthenticationFilter.Config())))
                         .uri("lb://INVENTORY-SERVICE"))
-                .build();
 
+                .route("inventory-docs", r -> r.path("/INVENTORY-SERVICE/v3/api-docs/**")
+                        .filters(f -> f.rewritePath("/INVENTORY-SERVICE/(?<path>.*)", "/${path}"))
+                        .uri("lb://INVENTORY-SERVICE"))
+
+                .build();
     }
 
 }
